@@ -295,10 +295,32 @@
     margin-left: 0.4rem;
   }
 
+  .grid-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 6px;
+  }
+
+  .grid-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+  .grid-scroll::-webkit-scrollbar-track {
+    background: var(--surface);
+  }
+  .grid-scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .grid-milestone .ms-short { display: none; }
+
   @media (max-width: 900px) {
     .cell .days { font-size: 1rem; }
     .cell .date { font-size: 0.5rem; }
     .grid-header, .grid-milestone { font-size: 0.6rem; padding: 0.4rem 0.5rem; }
+    .grid { min-width: 480px; }
+    .grid-milestone .ms-full { display: none; }
+    .grid-milestone .ms-short { display: inline; }
   }
 </style>
 </head>
@@ -467,11 +489,12 @@ function render() {
 
   for (const project of PROJECTS) {
     const epCount = project.episodes.length;
-    const cols = `140px repeat(${epCount}, 1fr)`;
+    const cols = `100px repeat(${epCount}, 1fr)`;
     const projectUpcoming = [];
 
     html += `<div class="project-block">`;
     html += `<div class="project-title">${project.name}</div>`;
+    html += `<div class="grid-scroll">`;
     html += `<div class="grid" style="grid-template-columns: ${cols}">`;
 
     // Header row
@@ -481,8 +504,15 @@ function render() {
     }
 
     // Milestone rows
+    const shortNames = {
+      'VFX Turnover': 'Turnover',
+      'VFX Approvals': 'Approvals',
+      'VFX Delivery': 'Delivery',
+      'VFX Spot': 'Spot',
+    };
     for (const ms of project.milestones) {
-      html += `<div class="grid-milestone">${ms.name}</div>`;
+      const short = shortNames[ms.name] || ms.name;
+      html += `<div class="grid-milestone"><span class="ms-full">${ms.name}</span><span class="ms-short">${short}</span></div>`;
       for (let i = 0; i < epCount; i++) {
         const isoDate = ms.dates[i];
         const target = new Date(isoDate + 'T00:00:00');
@@ -511,7 +541,7 @@ function render() {
       }
     }
 
-    html += `</div>`;
+    html += `</div></div>`;
 
     // Per-project Next Up
     const perProjectHtml = renderNextUp(projectUpcoming, false, 5);
