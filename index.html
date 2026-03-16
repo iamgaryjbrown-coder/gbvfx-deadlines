@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GBVFX — Deadline Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0e;
+    --surface: #12141a;
+    --surface-alt: #181b23;
+    --border: #1f2330;
+    --text: #e2e4ea;
+    --text-dim: #6b7084;
+    --text-muted: #3d4155;
+    --accent: #4e8cff;
+    --past: #2a2d3a;
+    --past-text: #3d4155;
+    --crit: #ff3b4e;
+    --crit-bg: rgba(255, 59, 78, 0.08);
+    --warn: #ffaa2a;
+    --warn-bg: rgba(255, 170, 42, 0.06);
+    --ok: #2dd4a0;
+    --ok-bg: rgba(45, 212, 160, 0.05);
+    --clear: #4e8cff;
+    --clear-bg: rgba(78, 140, 255, 0.05);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  .noise {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .project-block {
+    margin-top: 2rem;
+  }
+
+  .project-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .project-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .grid {
+    display: grid;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .grid-header {
+    background: var(--surface-alt);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .grid-milestone {
+    background: var(--surface);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .cell {
+    background: var(--surface);
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    transition: background 0.2s;
+  }
+
+  .cell:hover {
+    background: var(--surface-alt);
+  }
+
+  .cell .days {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .cell .date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.05em;
+    margin-top: 3px;
+    opacity: 0.5;
+  }
+
+  .cell .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* States */
+  .cell.past       { background: var(--past); }
+  .cell.past .days  { color: var(--past-text); }
+  .cell.past .date  { color: var(--past-text); }
+  .cell.past .label { color: var(--past-text); }
+
+  .cell.crit        { background: var(--crit-bg); }
+  .cell.crit .days  { color: var(--crit); }
+  .cell.crit .label { color: var(--crit); }
+
+  .cell.warn        { background: var(--warn-bg); }
+  .cell.warn .days  { color: var(--warn); }
+  .cell.warn .label { color: var(--warn); }
+
+  .cell.ok          { background: var(--ok-bg); }
+  .cell.ok .days    { color: var(--ok); }
+  .cell.ok .label   { color: var(--ok); }
+
+  .cell.clear       { background: var(--clear-bg); }
+  .cell.clear .days { color: var(--clear); }
+  .cell.clear .label{ color: var(--clear); }
+
+  .today-marker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  .next-up {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .next-up.global {
+    margin-top: 1rem;
+    border-color: #2a2e3d;
+    background: linear-gradient(135deg, rgba(18, 20, 26, 0.97) 0%, rgba(24, 27, 35, 0.97) 100%);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .next-up-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+
+  .next-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+  }
+
+  .next-item .ni-days {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    min-width: 4ch;
+    text-align: right;
+  }
+
+  .next-item .ni-detail {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .next-item .ni-detail strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .ni-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(78, 140, 255, 0.12);
+    color: var(--accent);
+    margin-left: 0.4rem;
+  }
+
+  @media (max-width: 900px) {
+    .cell .days { font-size: 1rem; }
+    .cell .date { font-size: 0.5rem; }
+    .grid-header, .grid-milestone { font-size: 0.6rem; padding: 0.4rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+  <header>
+    <h1>GBVFX Deadlines</h1>
+    <span class="clock" id="clock"></span>
+  </header>
+
+  <div id="global-next"></div>
+
+  <div id="app"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--crit)"></div> 0–5 days</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div> 6–10 days</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--ok)"></div> 11–20 days</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--clear)"></div> 21+ days</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--past-text)"></div> Past</div>
+  </div>
+
+  <div class="today-marker" id="today-label"></div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIGURATION — Edit your projects and dates here
+// ============================================================
+const PROJECTS = [
+  {
+    name: "Treasure Island",
+    episodes: ["EP1", "EP2", "EP3", "EP4", "EP5", "EP6"],
+    milestones: [
+      { name: "Lock",           dates: ["2026-03-26","2026-04-21","2026-05-27","2026-05-01","2026-05-18","2026-06-19"] },
+      { name: "VFX Turnover",   dates: ["2026-03-27","2026-04-22","2026-05-28","2026-05-05","2026-05-19","2026-06-22"] },
+      { name: "Conform",        dates: ["2026-03-30","2026-04-23","2026-05-29","2026-05-06","2026-05-20","2026-06-23"] },
+      { name: "VFX Spot",       dates: ["2026-04-01","2026-04-27","2026-06-02","2026-05-08","2026-05-22","2026-06-26"] },
+      { name: "VFX Approvals",  dates: ["2026-06-02","2026-06-09","2026-07-14","2026-06-30","2026-07-07","2026-08-18"] },
+      { name: "VFX Delivery",   dates: ["2026-06-05","2026-06-12","2026-07-17","2026-07-03","2026-07-10","2026-08-21"] },
+      { name: "Grade",          dates: ["2026-06-08","2026-06-15","2026-07-21","2026-07-07","2026-07-13","2026-08-25"] },
+    ]
+  }
+  // Add more projects here using the same structure
+];
+
+// UK Bank Holidays 2026 (add more years as needed)
+const BANK_HOLIDAYS = [
+  "2026-01-01", // New Year
+  "2026-04-03", // Good Friday
+  "2026-04-06", // Easter Monday
+  "2026-05-04", // Early May Bank Holiday
+  "2026-05-25", // Spring Bank Holiday
+  "2026-08-31", // Summer Bank Holiday
+  "2026-12-25", // Christmas
+  "2026-12-28", // Boxing Day (substitute)
+].map(d => d);
+
+// ============================================================
+
+function isWeekend(date) {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
+function toDateStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function isBankHoliday(date) {
+  return BANK_HOLIDAYS.includes(toDateStr(date));
+}
+
+function workingDaysBetween(from, to) {
+  // from and to are Date objects (midnight local)
+  // Returns positive if 'to' is in the future, negative if past
+  if (from.getTime() === to.getTime()) return 0;
+
+  const direction = to > from ? 1 : -1;
+  let count = 0;
+  const cursor = new Date(from);
+
+  if (direction === 1) {
+    cursor.setDate(cursor.getDate() + 1); // start counting from tomorrow
+    while (cursor <= to) {
+      if (!isWeekend(cursor) && !isBankHoliday(cursor)) count++;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  } else {
+    // past: count working days from deadline to today
+    const c2 = new Date(to);
+    c2.setDate(c2.getDate() + 1);
+    while (c2 <= from) {
+      if (!isWeekend(c2) && !isBankHoliday(c2)) count++;
+      c2.setDate(c2.getDate() + 1);
+    }
+    count = -count;
+  }
+
+  return count;
+}
+
+function getToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function formatDate(isoStr) {
+  const d = new Date(isoStr + 'T00:00:00');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+function formatDayName(isoStr) {
+  const d = new Date(isoStr + 'T00:00:00');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return days[d.getDay()];
+}
+
+function stateClass(wd) {
+  if (wd < 0)  return 'past';
+  if (wd <= 5) return 'crit';
+  if (wd <= 10) return 'warn';
+  if (wd <= 20) return 'ok';
+  return 'clear';
+}
+
+function stateColor(wd) {
+  if (wd < 0)   return 'var(--past-text)';
+  if (wd <= 5)  return 'var(--crit)';
+  if (wd <= 10) return 'var(--warn)';
+  if (wd <= 20) return 'var(--ok)';
+  return 'var(--clear)';
+}
+
+function renderNextUp(items, showProjectTag, limit) {
+  let html = '';
+  const sorted = items.slice().sort((a, b) => a.wd - b.wd);
+  const shown = sorted.slice(0, limit);
+  if (shown.length === 0) return '';
+
+  for (const item of shown) {
+    const col = stateColor(item.wd);
+    const dayLabel = item.wd === 0 ? 'TODAY' : item.wd === 1 ? '1 day' : `${item.wd}d`;
+    html += `<div class="next-item">`;
+    html += `<span class="ni-days" style="color:${col}">${dayLabel}</span>`;
+    html += `<span class="ni-detail"><strong>${item.ep} ${item.ms}</strong> · ${formatDayName(item.date)} ${formatDate(item.date)}`;
+    if (showProjectTag) {
+      html += `<span class="ni-tag">${item.project}</span>`;
+    }
+    html += `</span></div>`;
+  }
+  return html;
+}
+
+function render() {
+  const today = getToday();
+  const app = document.getElementById('app');
+  const globalNext = document.getElementById('global-next');
+  let html = '';
+  const allUpcoming = [];
+
+  for (const project of PROJECTS) {
+    const epCount = project.episodes.length;
+    const cols = `140px repeat(${epCount}, 1fr)`;
+    const projectUpcoming = [];
+
+    html += `<div class="project-block">`;
+    html += `<div class="project-title">${project.name}</div>`;
+    html += `<div class="grid" style="grid-template-columns: ${cols}">`;
+
+    // Header row
+    html += `<div class="grid-header"></div>`;
+    for (const ep of project.episodes) {
+      html += `<div class="grid-header" style="justify-content:center">${ep}</div>`;
+    }
+
+    // Milestone rows
+    for (const ms of project.milestones) {
+      html += `<div class="grid-milestone">${ms.name}</div>`;
+      for (let i = 0; i < epCount; i++) {
+        const isoDate = ms.dates[i];
+        const target = new Date(isoDate + 'T00:00:00');
+        const wd = workingDaysBetween(today, target);
+        const cls = stateClass(wd);
+        const displayDays = wd < 0 ? `${Math.abs(wd)}` : wd === 0 ? '0' : `${wd}`;
+        const labelText = wd < 0 ? 'past' : wd === 0 ? 'TODAY' : wd === 1 ? 'day' : 'days';
+
+        html += `<div class="cell ${cls}">`;
+        html += `<span class="days">${displayDays}</span>`;
+        html += `<span class="label">${labelText}</span>`;
+        html += `<span class="date">${formatDate(isoDate)}</span>`;
+        html += `</div>`;
+
+        // Collect upcoming
+        if (wd >= 0 && wd <= 60) {
+          const entry = {
+            wd, project: project.name,
+            ep: project.episodes[i],
+            ms: ms.name,
+            date: isoDate
+          };
+          projectUpcoming.push(entry);
+          allUpcoming.push(entry);
+        }
+      }
+    }
+
+    html += `</div>`;
+
+    // Per-project Next Up
+    const perProjectHtml = renderNextUp(projectUpcoming, false, 5);
+    if (perProjectHtml) {
+      html += `<div class="next-up">`;
+      html += `<div class="next-up-title">Next Up</div>`;
+      html += perProjectHtml;
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  app.innerHTML = html;
+
+  // Global Next Up (top of page, across all projects)
+  const globalHtml = renderNextUp(allUpcoming, PROJECTS.length > 1, 10);
+  if (globalHtml) {
+    globalNext.innerHTML =
+      `<div class="next-up global">` +
+      `<div class="next-up-title">Next Up — All Projects</div>` +
+      globalHtml +
+      `</div>`;
+  } else {
+    globalNext.innerHTML = '';
+  }
+
+  // Today label
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('today-label').textContent =
+    `Working days counted from ${days[today.getDay()]} ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}, excl. weekends & UK bank holidays`;
+}
+
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+
+// Initial render
+render();
+updateClock();
+setInterval(updateClock, 1000);
+// Re-render at midnight
+setInterval(() => {
+  const now = new Date();
+  if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() < 2) render();
+}, 1000);
+</script>
+</body>
+</html>
