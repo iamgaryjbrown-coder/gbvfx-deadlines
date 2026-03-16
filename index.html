@@ -99,6 +99,14 @@
     border-radius: 2px;
   }
 
+  .schedule-ref {
+    font-weight: 300;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: none;
+  }
+
   .grid {
     display: grid;
     gap: 1px;
@@ -354,6 +362,7 @@
 const PROJECTS = [
   {
     name: "Treasure Island",
+    schedule: "TREA Post Production Schedule_V1_110226",
     episodes: ["EP1", "EP2", "EP3", "EP4", "EP5", "EP6"],
     milestones: [
       { name: "Lock",           dates: ["2026-03-26","2026-04-21","2026-05-27","2026-05-01","2026-05-18","2026-06-19"] },
@@ -493,7 +502,11 @@ function render() {
     const projectUpcoming = [];
 
     html += `<div class="project-block">`;
-    html += `<div class="project-title">${project.name}</div>`;
+    html += `<div class="project-title">${project.name}`;
+    if (project.schedule) {
+      html += `<span class="schedule-ref">${project.schedule}</span>`;
+    }
+    html += `</div>`;
     html += `<div class="grid-scroll">`;
     html += `<div class="grid" style="grid-template-columns: ${cols}">`;
 
