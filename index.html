@@ -503,7 +503,9 @@ function render() {
   let html = '';
   const allUpcoming = [];
 
-  for (const project of PROJECTS) {
+  const sortedProjects = PROJECTS.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const project of sortedProjects) {
     const epCount = project.episodes.length;
     const cols = `100px repeat(${epCount}, 1fr)`;
     const projectUpcoming = [];
