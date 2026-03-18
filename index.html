@@ -581,7 +581,7 @@ function renderShotData(container,shots){
   shots.sort((a,b)=>{
     const sa=a.attributes?.sg_status_list||a.sg_status_list||'';
     const sb=b.attributes?.sg_status_list||b.sg_status_list||'';
-    return (statusOrder[sa]??99)-(statusOrder[sb]??99);
+    const diff=(statusOrder[sa]??99)-(statusOrder[sb]??99); if(diff!==0) return diff; const ca=a.attributes?.code||a.code||''; const cb=b.attributes?.code||b.code||''; return ca.localeCompare(cb,undefined,{numeric:true});
   });
 
   const missingExr=shots.filter(s=>{const a=s.attributes||s;return !a.sg_exr_2_vendor;}).length;
