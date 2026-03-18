@@ -35,7 +35,6 @@
     color: var(--text);
     font-family: 'Outfit', sans-serif;
     min-height: 100vh;
-    overflow-x: auto;
   }
 
   .noise {
@@ -155,13 +154,24 @@
     margin-top: 1.25rem; padding: 1rem 1.25rem;
     background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
   }
-  .next-up.global {
-    margin-top: 1rem; border-color: #2a2e3d;
-    background: linear-gradient(135deg, rgba(18,20,26,0.97) 0%, rgba(24,27,35,0.97) 100%);
+
+  /* Global sticky Next Up — sits outside .container */
+  #global-next:empty { display: none; }
+  #global-next {
     position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-radius: 0 0 6px 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
   }
+  .next-up.global {
+    border-color: #2a2e3d;
+    background: linear-gradient(135deg, rgba(18,20,26,0.97) 0%, rgba(24,27,35,0.97) 100%);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    margin-top: 0;
+  }
+
   .next-up-title {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem; font-weight: 500;
@@ -318,12 +328,15 @@
 </head>
 <body>
 <div class="noise"></div>
+
+<!-- Global Next Up: OUTSIDE container so sticky works against the viewport -->
+<div id="global-next"></div>
+
 <div class="container">
   <header>
     <h1>GBVFX Deadlines</h1>
     <span class="clock" id="clock"></span>
   </header>
-  <div id="global-next"></div>
   <div id="app"></div>
   <div class="legend">
     <div class="legend-item"><div class="legend-dot" style="background:var(--crit)"></div> 0–5 days</div>
@@ -421,132 +434,138 @@ const SG_STATUS_COLORS = {
 };
 
 function isWeekend(d){ return d.getDay()===0||d.getDay()===6; }
-function toDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function toDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function isBankHoliday(d){ return BANK_HOLIDAYS.includes(toDateStr(d)); }
 
 function workingDaysBetween(from, to) {
   if(from.getTime()===to.getTime()) return 0;
-  const dir = to>from?1:-1;
-  let count=0;
-  if(dir===1){ const c=new Date(from); c.setDate(c.getDate()+1); while(c<=to){ if(!isWeekend(c)&&!isBankHoliday(c)) count++; c.setDate(c.getDate()+1); } }
-  else { const c=new Date(to); c.setDate(c.getDate()+1); while(c<=from){ if(!isWeekend(c)&&!isBankHoliday(c)) count++; c.setDate(c.getDate()+1); } count=-count; }
+  var dir = to>from?1:-1, count=0;
+  if(dir===1){ var c=new Date(from); c.setDate(c.getDate()+1); while(c<=to){ if(!isWeekend(c)&&!isBankHoliday(c)) count++; c.setDate(c.getDate()+1); } }
+  else { var c=new Date(to); c.setDate(c.getDate()+1); while(c<=from){ if(!isWeekend(c)&&!isBankHoliday(c)) count++; c.setDate(c.getDate()+1); } count=-count; }
   return count;
 }
 
-function getToday(){ const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
-function formatDate(s){ const d=new Date(s+'T00:00:00'); const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${d.getDate()} ${m[d.getMonth()]}`; }
-function formatDayName(s){ const d=new Date(s+'T00:00:00'); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]; }
+function getToday(){ var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+function formatDate(s){ var d=new Date(s+'T00:00:00'); var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return d.getDate()+' '+m[d.getMonth()]; }
+function formatDayName(s){ var d=new Date(s+'T00:00:00'); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]; }
 function stateClass(w){ if(w<0) return 'past'; if(w<=5) return 'crit'; if(w<=10) return 'warn'; if(w<=20) return 'ok'; return 'clear'; }
 function stateColor(w){ if(w<0) return 'var(--past-text)'; if(w<=5) return 'var(--crit)'; if(w<=10) return 'var(--warn)'; if(w<=20) return 'var(--ok)'; return 'var(--clear)'; }
 
 function renderNextUp(items, showProjectTag, limit) {
-  let html='';
-  const sorted=items.slice().sort((a,b)=>a.wd-b.wd);
-  const shown=sorted.slice(0,limit);
+  var html='';
+  var sorted=items.slice().sort(function(a,b){return a.wd-b.wd;});
+  var shown=sorted.slice(0,limit);
   if(!shown.length) return '';
-  for(const item of shown){
-    const col=stateColor(item.wd);
-    const dayLabel=item.wd===0?'TODAY':item.wd===1?'1 day':`${item.wd}d`;
-    const sg=SG_PROJECT_MAP[item.project];
-    const hasShot=sg&&sg.id!==null;
-    const epNum=parseInt(item.ep.replace(/\D/g,''),10);
-    const epCode=epNum<100?100+epNum:epNum;
-    const click=hasShot?` onclick="openShotPanel('${item.project.replace(/'/g,"\\'")}',${sg.id},${epCode},'${item.ep}','${item.ms}')" `:'';
-    const cls=hasShot?' clickable':'';
-    html+=`<div class="next-item${cls}"${click}>`;
-    html+=`<span class="ni-days" style="color:${col}">${dayLabel}</span>`;
-    html+=`<span class="ni-detail"><strong>${item.ep} ${item.ms}</strong> · ${formatDayName(item.date)} ${formatDate(item.date)}`;
-    if(showProjectTag) html+=`<span class="ni-tag">${item.project}</span>`;
-    html+=`</span></div>`;
+  for(var i=0;i<shown.length;i++){
+    var item=shown[i];
+    var col=stateColor(item.wd);
+    var dayLabel=item.wd===0?'TODAY':item.wd===1?'1 day':item.wd+'d';
+    var sg=SG_PROJECT_MAP[item.project];
+    var hasShot=sg&&sg.id!==null;
+    var epNum=parseInt(item.ep.replace(/\D/g,''),10);
+    var epCode=epNum<100?100+epNum:epNum;
+    var click=hasShot?' onclick="openShotPanel(\''+item.project.replace(/'/g,"\\'")+'\','+sg.id+','+epCode+',\''+item.ep+'\',\''+item.ms+'\')" ':'';
+    var cls=hasShot?' clickable':'';
+    html+='<div class="next-item'+cls+'"'+click+'>';
+    html+='<span class="ni-days" style="color:'+col+'">'+dayLabel+'</span>';
+    html+='<span class="ni-detail"><strong>'+item.ep+' '+item.ms+'</strong> · '+formatDayName(item.date)+' '+formatDate(item.date);
+    if(showProjectTag) html+='<span class="ni-tag">'+item.project+'</span>';
+    html+='</span></div>';
   }
   return html;
 }
 
 function render() {
-  const today=getToday();
-  const app=document.getElementById('app');
-  const globalNext=document.getElementById('global-next');
-  let html='';
-  const allUpcoming=[];
-  const sortedProjects=PROJECTS.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  var today=getToday();
+  var app=document.getElementById('app');
+  var globalNext=document.getElementById('global-next');
+  var html='';
+  var allUpcoming=[];
+  var sortedProjects=PROJECTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
 
-  for(const project of sortedProjects){
-    const epCount=project.episodes.length;
-    const cols=`100px repeat(${epCount}, 1fr)`;
-    const projectUpcoming=[];
-    html+=`<div class="project-block">`;
-    html+=`<div class="project-title">${project.name}`;
-    if(project.schedule) html+=`<span class="schedule-ref">${project.schedule}</span>`;
-    html+=`</div>`;
-    html+=`<div class="grid-scroll"><div class="grid" style="grid-template-columns: ${cols}">`;
-    html+=`<div class="grid-header"></div>`;
-    for(const ep of project.episodes) html+=`<div class="grid-header" style="justify-content:center">${ep}</div>`;
+  for(var p=0;p<sortedProjects.length;p++){
+    var project=sortedProjects[p];
+    var epCount=project.episodes.length;
+    var cols='100px repeat('+epCount+', 1fr)';
+    var projectUpcoming=[];
+    html+='<div class="project-block">';
+    html+='<div class="project-title">'+project.name;
+    if(project.schedule) html+='<span class="schedule-ref">'+project.schedule+'</span>';
+    html+='</div>';
+    html+='<div class="grid-scroll"><div class="grid" style="grid-template-columns: '+cols+'">';
+    html+='<div class="grid-header"></div>';
+    for(var e=0;e<project.episodes.length;e++) html+='<div class="grid-header" style="justify-content:center">'+project.episodes[e]+'</div>';
 
-    const shortNames={'VFX Turnover':'Turnover','VFX Approvals':'Approvals','VFX Delivery':'Delivery','VFX Spot':'Spot'};
-    for(const ms of project.milestones){
-      const short=shortNames[ms.name]||ms.name;
-      html+=`<div class="grid-milestone"><span class="ms-full">${ms.name}</span><span class="ms-short">${short}</span></div>`;
-      for(let i=0;i<epCount;i++){
-        const isoDate=ms.dates[i];
-        const target=new Date(isoDate+'T00:00:00');
-        const wd=workingDaysBetween(today,target);
-        const cls=stateClass(wd);
-        const displayDays=wd<0?`${Math.abs(wd)}`:wd===0?'0':`${wd}`;
-        const labelText=wd<0?'past':wd===0?'TODAY':wd===1?'day':'days';
-        html+=`<div class="cell ${cls}"><span class="days">${displayDays}</span><span class="label">${labelText}</span><span class="date">${formatDate(isoDate)}</span></div>`;
+    var shortNames={'VFX Turnover':'Turnover','VFX Approvals':'Approvals','VFX Delivery':'Delivery','VFX Spot':'Spot'};
+    for(var m=0;m<project.milestones.length;m++){
+      var ms=project.milestones[m];
+      var short=shortNames[ms.name]||ms.name;
+      html+='<div class="grid-milestone"><span class="ms-full">'+ms.name+'</span><span class="ms-short">'+short+'</span></div>';
+      for(var i=0;i<epCount;i++){
+        var isoDate=ms.dates[i];
+        var target=new Date(isoDate+'T00:00:00');
+        var wd=workingDaysBetween(today,target);
+        var cls=stateClass(wd);
+        var displayDays=wd<0?Math.abs(wd):wd===0?'0':wd;
+        var labelText=wd<0?'past':wd===0?'TODAY':wd===1?'day':'days';
+        html+='<div class="cell '+cls+'"><span class="days">'+displayDays+'</span><span class="label">'+labelText+'</span><span class="date">'+formatDate(isoDate)+'</span></div>';
         if(wd>=0&&wd<=60){
-          const entry={wd,project:project.name,ep:project.episodes[i],ms:ms.name,date:isoDate};
+          var entry={wd:wd,project:project.name,ep:project.episodes[i],ms:ms.name,date:isoDate};
           projectUpcoming.push(entry); allUpcoming.push(entry);
         }
       }
     }
-    html+=`</div></div>`;
-    const ppHtml=renderNextUp(projectUpcoming,false,5);
-    if(ppHtml) html+=`<div class="next-up"><div class="next-up-title">Next Up</div>${ppHtml}</div>`;
-    html+=`</div>`;
+    html+='</div></div>';
+    var ppHtml=renderNextUp(projectUpcoming,false,5);
+    if(ppHtml) html+='<div class="next-up"><div class="next-up-title">Next Up</div>'+ppHtml+'</div>';
+    html+='</div>';
   }
 
   app.innerHTML=html;
-  const globalHtml=renderNextUp(allUpcoming,PROJECTS.length>1,10);
-  if(globalHtml) globalNext.innerHTML=`<div class="next-up global"><div class="next-up-title">Next Up — All Projects</div>${globalHtml}</div>`;
-  else globalNext.innerHTML='';
 
-  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  document.getElementById('today-label').textContent=`Working days counted from ${days[today.getDay()]} ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}, excl. weekends & UK bank holidays`;
+  var globalHtml=renderNextUp(allUpcoming,PROJECTS.length>1,10);
+  if(globalHtml){
+    globalNext.innerHTML='<div class="next-up global"><div class="next-up-title">Next Up — All Projects</div>'+globalHtml+'</div>';
+  } else {
+    globalNext.innerHTML='';
+  }
+
+  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('today-label').textContent='Working days counted from '+days[today.getDay()]+' '+today.getDate()+' '+months[today.getMonth()]+' '+today.getFullYear()+', excl. weekends & UK bank holidays';
 }
 
 function updateClock(){
-  const n=new Date();
-  document.getElementById('clock').textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+  var n=new Date();
+  document.getElementById('clock').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
 }
 
 render(); updateClock();
 setInterval(updateClock,1000);
-setInterval(()=>{ const n=new Date(); if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<2) render(); },1000);
+setInterval(function(){ var n=new Date(); if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<2) render(); },1000);
 
 // ============================================================
 //  SHOTGRID SHOT STATUS PANEL
 // ============================================================
-let shotAbort=null;
+var shotAbort=null;
 
 function openShotPanel(projectName,projectId,episode,epLabel,milestone){
-  const overlay=document.getElementById('shot-overlay');
-  const panel=document.getElementById('shot-panel');
-  const title=document.getElementById('shot-panel-title');
-  const subtitle=document.getElementById('shot-panel-subtitle');
-  const body=document.getElementById('shot-panel-body');
+  var overlay=document.getElementById('shot-overlay');
+  var panel=document.getElementById('shot-panel');
+  var title=document.getElementById('shot-panel-title');
+  var subtitle=document.getElementById('shot-panel-subtitle');
+  var body=document.getElementById('shot-panel-body');
 
-  title.textContent=`${projectName} — ${epLabel}`;
-  subtitle.textContent=`${milestone} · Shot Status from ShotGrid`;
-  body.innerHTML=`<div class="shot-panel-loading"><div class="shot-spinner"></div>Querying ShotGrid…</div>`;
+  title.textContent=projectName+' — '+epLabel;
+  subtitle.textContent=milestone+' · Shot Status from ShotGrid';
+  body.innerHTML='<div class="shot-panel-loading"><div class="shot-spinner"></div>Querying ShotGrid…</div>';
 
   overlay.classList.add('open'); panel.classList.add('open');
   document.body.style.overflow='hidden';
 
   if(shotAbort) shotAbort.abort();
   shotAbort=new AbortController();
-  const timeout=setTimeout(()=>shotAbort.abort(),12000);
+  var timeout=setTimeout(function(){shotAbort.abort();},12000);
 
   fetch(SHOTGRID_WEBHOOK,{
     method:'POST',
@@ -554,12 +573,12 @@ function openShotPanel(projectName,projectId,episode,epLabel,milestone){
     body:JSON.stringify({project_id:projectId,project_name:projectName,episode:episode}),
     signal:shotAbort.signal,
   })
-  .then(r=>{ clearTimeout(timeout); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-  .then(data=>renderShotData(body,data))
-  .catch(err=>{
+  .then(function(r){ clearTimeout(timeout); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(function(data){ renderShotData(body,data); })
+  .catch(function(err){
     clearTimeout(timeout);
-    if(err.name==='AbortError') body.innerHTML=`<div class="shot-panel-error">Request timed out. Try again.</div>`;
-    else body.innerHTML=`<div class="shot-panel-error">Could not reach ShotGrid.<br>${err.message}</div>`;
+    if(err.name==='AbortError') body.innerHTML='<div class="shot-panel-error">Request timed out. Try again.</div>';
+    else body.innerHTML='<div class="shot-panel-error">Could not reach ShotGrid.<br>'+err.message+'</div>';
   });
 }
 
@@ -569,46 +588,56 @@ function closeShotPanel(){
   document.body.style.overflow='';
   if(shotAbort){shotAbort.abort();shotAbort=null;}
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeShotPanel();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeShotPanel();});
 
 function renderShotData(container,shots){
   if(!shots||!shots.length){
-    container.innerHTML=`<div class="shot-panel-empty">All shots delivered or omitted ✓</div>`;
+    container.innerHTML='<div class="shot-panel-empty">All shots delivered or omitted ✓</div>';
     return;
   }
 
-  const statusOrder={issue:0,notes:1,ip:2,'4rv':3,send:4,gdwip:5,sndexr:6};
-  shots.sort((a,b)=>{
-    const sa=a.attributes?.sg_status_list||a.sg_status_list||'';
-    const sb=b.attributes?.sg_status_list||b.sg_status_list||'';
-    const diff=(statusOrder[sa]??99)-(statusOrder[sb]??99); if(diff!==0) return diff; const ca=a.attributes?.code||a.code||''; const cb=b.attributes?.code||b.code||''; return ca.localeCompare(cb,undefined,{numeric:true});
+  // Sort by status group, then numerically by shot code
+  var statusOrder={issue:0,notes:1,ip:2,'4rv':3,send:4,gdwip:5,sndexr:6};
+  shots.sort(function(a,b){
+    var sa=(a.attributes?a.attributes.sg_status_list:a.sg_status_list)||'';
+    var sb=(b.attributes?b.attributes.sg_status_list:b.sg_status_list)||'';
+    var diff=(statusOrder[sa]!==undefined?statusOrder[sa]:99)-(statusOrder[sb]!==undefined?statusOrder[sb]:99);
+    if(diff!==0) return diff;
+    var ca=(a.attributes?a.attributes.code:a.code)||'';
+    var cb=(b.attributes?b.attributes.code:b.code)||'';
+    return ca.localeCompare(cb,undefined,{numeric:true});
   });
 
-  const missingExr=shots.filter(s=>{const a=s.attributes||s;return !a.sg_exr_2_vendor;}).length;
+  var missingExr=0;
+  for(var i=0;i<shots.length;i++){
+    var a=shots[i].attributes||shots[i];
+    if(!a.sg_exr_2_vendor) missingExr++;
+  }
 
-  let html=`<div class="shot-count">${shots.length} shot${shots.length!==1?'s':''} remaining`;
-  if(missingExr>0) html+=` · <span style="color:var(--crit)">${missingExr} missing EXR 2 Vendor date</span>`;
-  html+=`</div>`;
+  var html='<div class="shot-count">'+shots.length+' shot'+(shots.length!==1?'s':'')+' remaining';
+  if(missingExr>0) html+=' · <span style="color:var(--crit)">'+missingExr+' missing EXR 2 Vendor date</span>';
+  html+='</div>';
 
-  for(const shot of shots){
-    const attrs=shot.attributes||shot;
-    const code=attrs.code||'Unknown';
-    const status=attrs.sg_status_list||'??';
-    const desc=attrs.description||'';
-    const img=attrs.image||null;
-    const exrVendor=attrs.sg_exr_2_vendor||null;
-    const label=SG_STATUS_LABELS[status]||status.toUpperCase();
-    const colors=SG_STATUS_COLORS[status]||{bg:'rgba(255,255,255,0.06)',text:'#6b7084'};
+  for(var i=0;i<shots.length;i++){
+    var shot=shots[i];
+    var attrs=shot.attributes||shot;
+    var code=attrs.code||'Unknown';
+    var status=attrs.sg_status_list||'??';
+    var desc=attrs.description||'';
+    var img=attrs.image||null;
+    var exrVendor=attrs.sg_exr_2_vendor||null;
+    var label=SG_STATUS_LABELS[status]||status.toUpperCase();
+    var colors=SG_STATUS_COLORS[status]||{bg:'rgba(255,255,255,0.06)',text:'#6b7084'};
 
-    html+=`<div class="shot-card">`;
-    if(img) html+=`<img class="shot-thumb" src="${img}" alt="${code}" loading="lazy" onerror="this.outerHTML='<div class=\\'shot-thumb-placeholder\\'>NO IMG</div>'">`;
-    else html+=`<div class="shot-thumb-placeholder">NO IMG</div>`;
-    html+=`<div class="shot-info"><div class="shot-code">${code}</div>`;
-    if(desc) html+=`<div class="shot-desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</div>`;
-    if(!exrVendor) html+=`<div class="shot-no-exr">⚠ NO EXR 2 VENDOR DATE</div>`;
-    html+=`</div>`;
-    html+=`<span class="shot-badge" style="background:${colors.bg};color:${colors.text}">${label}</span>`;
-    html+=`</div>`;
+    html+='<div class="shot-card">';
+    if(img) html+='<img class="shot-thumb" src="'+img+'" alt="'+code+'" loading="lazy" onerror="this.outerHTML=\'<div class=\\\'shot-thumb-placeholder\\\'>NO IMG</div>\'">';
+    else html+='<div class="shot-thumb-placeholder">NO IMG</div>';
+    html+='<div class="shot-info"><div class="shot-code">'+code+'</div>';
+    if(desc) html+='<div class="shot-desc" title="'+desc.replace(/"/g,'&quot;')+'">'+desc+'</div>';
+    if(!exrVendor) html+='<div class="shot-no-exr">⚠ NO EXR 2 VENDOR DATE</div>';
+    html+='</div>';
+    html+='<span class="shot-badge" style="background:'+colors.bg+';color:'+colors.text+'">'+label+'</span>';
+    html+='</div>';
   }
 
   container.innerHTML=html;
