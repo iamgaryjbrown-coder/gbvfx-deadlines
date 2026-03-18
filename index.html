@@ -597,12 +597,7 @@ function renderShotData(container,shots){
   }
 
   // Sort by status group, then numerically by shot code
-  var statusOrder={issue:0,notes:1,ip:2,'4rv':3,send:4,gdwip:5,sndexr:6};
-  shots.sort(function(a,b){
-    var sa=(a.attributes?a.attributes.sg_status_list:a.sg_status_list)||'';
-    var sb=(b.attributes?b.attributes.sg_status_list:b.sg_status_list)||'';
-    var diff=(statusOrder[sa]!==undefined?statusOrder[sa]:99)-(statusOrder[sb]!==undefined?statusOrder[sb]:99);
-    if(diff!==0) return diff;
+shots.sort(function(a,b){
     var ca=(a.attributes?a.attributes.code:a.code)||'';
     var cb=(b.attributes?b.attributes.code:b.code)||'';
     return ca.localeCompare(cb,undefined,{numeric:true});
