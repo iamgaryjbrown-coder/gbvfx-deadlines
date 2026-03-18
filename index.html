@@ -269,6 +269,17 @@
     align-items: baseline;
     gap: 0.75rem;
     padding: 0.3rem 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    margin-left: -0.3rem;
+    margin-right: -0.3rem;
+  }
+
+  .next-item:hover {
+    background: rgba(78, 140, 255, 0.06);
   }
 
   .next-item .ni-days {
@@ -303,6 +314,17 @@
     margin-left: 0.4rem;
   }
 
+  .ni-sg-icon {
+    font-size: 0.55rem;
+    margin-left: 0.3rem;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+  }
+
+  .next-item:hover .ni-sg-icon {
+    opacity: 0.8;
+  }
+
   .grid-scroll {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -322,6 +344,275 @@
 
   .grid-milestone .ms-short { display: none; }
 
+  /* ============================================================
+     SHOT PANEL — slide-out from right
+     ============================================================ */
+  .shot-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .shot-panel-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .shot-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    max-width: 90vw;
+    height: 100vh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 201;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .shot-panel.active {
+    transform: translateX(0);
+  }
+
+  .shot-panel-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+
+  .shot-panel-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .shot-panel-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .shot-panel-subtitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .shot-panel-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .shot-panel-close:hover {
+    background: var(--surface-alt);
+    color: var(--text);
+    border-color: var(--text-muted);
+  }
+
+  .shot-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+  }
+
+  .shot-panel-body::-webkit-scrollbar {
+    width: 4px;
+  }
+  .shot-panel-body::-webkit-scrollbar-track {
+    background: var(--surface);
+  }
+  .shot-panel-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  /* Shot count summary */
+  .shot-summary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .shot-summary .count {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  /* Individual shot card */
+  .shot-card {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(31, 35, 48, 0.5);
+    align-items: flex-start;
+  }
+
+  .shot-card:last-child {
+    border-bottom: none;
+  }
+
+  .shot-thumb {
+    width: 80px;
+    height: 45px;
+    border-radius: 4px;
+    background: var(--surface-alt);
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .shot-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .shot-thumb-empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .shot-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .shot-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .shot-status {
+    display: inline-block;
+    margin-top: 0.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  .shot-status.status-ip     { background: rgba(78, 140, 255, 0.15); color: #6ea8ff; }
+  .shot-status.status-wtg    { background: rgba(107, 112, 132, 0.15); color: var(--text-dim); }
+  .shot-status.status-notes  { background: rgba(255, 170, 42, 0.15); color: var(--warn); }
+  .shot-status.status-4rv    { background: rgba(45, 212, 160, 0.15); color: var(--ok); }
+  .shot-status.status-bid    { background: rgba(107, 112, 132, 0.15); color: var(--text-dim); }
+  .shot-status.status-sndexr { background: rgba(78, 140, 255, 0.12); color: var(--accent); }
+  .shot-status.status-send   { background: rgba(45, 212, 160, 0.12); color: var(--ok); }
+  .shot-status.status-awto   { background: rgba(107, 112, 132, 0.15); color: var(--text-dim); }
+  .shot-status.status-exr2gb { background: rgba(78, 140, 255, 0.12); color: #6ea8ff; }
+  .shot-status.status-gb4k   { background: rgba(45, 212, 160, 0.12); color: var(--ok); }
+  .shot-status.status-wdl    { background: rgba(45, 212, 160, 0.12); color: var(--ok); }
+  .shot-status.status-gdwip  { background: rgba(45, 212, 160, 0.10); color: var(--ok); }
+  .shot-status.status-wipexr { background: rgba(255, 170, 42, 0.12); color: var(--warn); }
+  .shot-status.status-issue  { background: rgba(255, 59, 78, 0.12); color: var(--crit); }
+  .shot-status.status-default { background: rgba(107, 112, 132, 0.12); color: var(--text-dim); }
+
+  .shot-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    line-height: 1.3;
+  }
+
+  /* Loading spinner */
+  .shot-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+    gap: 1rem;
+  }
+
+  .shot-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .shot-loading-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Empty/error states */
+  .shot-empty, .shot-error {
+    text-align: center;
+    padding: 2.5rem 1rem;
+  }
+
+  .shot-empty-icon, .shot-error-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.4;
+  }
+
+  .shot-empty-text, .shot-error-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+    line-height: 1.6;
+  }
+
+  .shot-error-text {
+    color: var(--crit);
+  }
+
   @media (max-width: 900px) {
     .cell .days { font-size: 1rem; }
     .cell .date { font-size: 0.5rem; }
@@ -329,6 +620,8 @@
     .grid { min-width: 480px; }
     .grid-milestone .ms-full { display: none; }
     .grid-milestone .ms-short { display: inline; }
+
+    .shot-panel { width: 100vw; max-width: 100vw; }
   }
 </style>
 </head>
@@ -353,6 +646,21 @@
   </div>
 
   <div class="today-marker" id="today-label"></div>
+</div>
+
+<!-- Shot Panel Overlay -->
+<div class="shot-panel-overlay" id="shotOverlay"></div>
+
+<!-- Shot Panel -->
+<div class="shot-panel" id="shotPanel">
+  <div class="shot-panel-header">
+    <div class="shot-panel-header-info">
+      <div class="shot-panel-title" id="shotPanelTitle"></div>
+      <div class="shot-panel-subtitle" id="shotPanelSubtitle"></div>
+    </div>
+    <button class="shot-panel-close" id="shotPanelClose">&times;</button>
+  </div>
+  <div class="shot-panel-body" id="shotPanelBody"></div>
 </div>
 
 <script>
@@ -411,6 +719,47 @@ const BANK_HOLIDAYS = [
 ].map(d => d);
 
 // ============================================================
+//  SHOTGRID INTEGRATION CONFIG
+// ============================================================
+const SHOTGRID_WEBHOOK = 'https://hook.eu1.make.com/s6x2g2rh1k02u61unukm8tny89xcouj2';
+
+// Map dashboard project names → ShotGrid project IDs
+const SG_PROJECT_MAP = {
+  'Bloomers':             386,
+  'Tall Tales & Murder':  287,
+  'Tommy & Tuppence':     321,
+  // 'Treasure Island':   TBD — add when set up in ShotGrid
+};
+
+// Map episode labels (EP1, EP3 etc.) → ShotGrid episode numbers
+function epToSgNum(epLabel) {
+  const n = parseInt(epLabel.replace('EP', ''), 10);
+  return 100 + n; // EP1 → 101, EP3 → 103, etc.
+}
+
+// Map ShotGrid status short codes → display names
+const SG_STATUS_NAMES = {
+  'wtg':    'Waiting to Start',
+  'ip':     'In Progress',
+  'omt':    'Omit',
+  'bid':    'Bidding',
+  'exr':    'EXR Sent',
+  '4rv':    'For Review',
+  'sndexr': 'Send EXR',
+  'notes':  'Notes',
+  'fin':    'Final',
+  'hld':    'On Hold',
+  'gb4k':   'GB 4K Approved',
+  'wdl':    'WDL Approved',
+  'issue':  'Issue',
+  'send':   'Good but not sent',
+  'awto':   'Awaiting Turnover',
+  'exr2gb': 'EXR 2 GB',
+  'gdwip':  'Good WIP',
+  'wipexr': 'WIP EXR Sent',
+};
+
+// ============================================================
 
 function isWeekend(date) {
   const day = date.getDay();
@@ -429,8 +778,6 @@ function isBankHoliday(date) {
 }
 
 function workingDaysBetween(from, to) {
-  // from and to are Date objects (midnight local)
-  // Returns positive if 'to' is in the future, negative if past
   if (from.getTime() === to.getTime()) return 0;
 
   const direction = to > from ? 1 : -1;
@@ -438,13 +785,12 @@ function workingDaysBetween(from, to) {
   const cursor = new Date(from);
 
   if (direction === 1) {
-    cursor.setDate(cursor.getDate() + 1); // start counting from tomorrow
+    cursor.setDate(cursor.getDate() + 1);
     while (cursor <= to) {
       if (!isWeekend(cursor) && !isBankHoliday(cursor)) count++;
       cursor.setDate(cursor.getDate() + 1);
     }
   } else {
-    // past: count working days from deadline to today
     const c2 = new Date(to);
     c2.setDate(c2.getDate() + 1);
     while (c2 <= from) {
@@ -490,6 +836,137 @@ function stateColor(wd) {
   return 'var(--clear)';
 }
 
+// ============================================================
+//  SHOTGRID PANEL
+// ============================================================
+const shotPanel = document.getElementById('shotPanel');
+const shotOverlay = document.getElementById('shotOverlay');
+const shotPanelBody = document.getElementById('shotPanelBody');
+const shotPanelTitle = document.getElementById('shotPanelTitle');
+const shotPanelSubtitle = document.getElementById('shotPanelSubtitle');
+
+function openShotPanel(projectName, ep) {
+  const projectId = SG_PROJECT_MAP[projectName];
+  if (!projectId) {
+    shotPanelTitle.textContent = projectName;
+    shotPanelSubtitle.textContent = ep;
+    shotPanelBody.innerHTML = `
+      <div class="shot-empty">
+        <div class="shot-empty-icon">🔗</div>
+        <div class="shot-empty-text">ShotGrid not connected for this project yet.</div>
+      </div>`;
+    shotPanel.classList.add('active');
+    shotOverlay.classList.add('active');
+    return;
+  }
+
+  const sgEp = epToSgNum(ep);
+  shotPanelTitle.textContent = `${projectName}`;
+  shotPanelSubtitle.textContent = `${ep} — Shot Status from ShotGrid`;
+
+  // Show loading
+  shotPanelBody.innerHTML = `
+    <div class="shot-loading">
+      <div class="shot-spinner"></div>
+      <div class="shot-loading-text">Querying ShotGrid…</div>
+    </div>`;
+
+  shotPanel.classList.add('active');
+  shotOverlay.classList.add('active');
+
+  // Fetch from Make.com webhook
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  fetch(SHOTGRID_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_id: projectId, project_name: projectName, episode: sgEp }),
+    signal: controller.signal
+  })
+  .then(res => {
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  })
+  .then(shots => {
+    renderShots(shots);
+  })
+  .catch(err => {
+    clearTimeout(timeout);
+    const msg = err.name === 'AbortError'
+      ? 'Request timed out. ShotGrid or Make.com may be unavailable.'
+      : `Could not fetch shot data. ${err.message}`;
+    shotPanelBody.innerHTML = `
+      <div class="shot-error">
+        <div class="shot-error-icon">⚠</div>
+        <div class="shot-error-text">${msg}</div>
+      </div>`;
+  });
+}
+
+function renderShots(shots) {
+  if (!shots || shots.length === 0) {
+    shotPanelBody.innerHTML = `
+      <div class="shot-empty">
+        <div class="shot-empty-icon">✓</div>
+        <div class="shot-empty-text">All shots delivered or omitted.<br>Nothing outstanding.</div>
+      </div>`;
+    return;
+  }
+
+  let html = `<div class="shot-summary"><span class="count">${shots.length}</span> shot${shots.length !== 1 ? 's' : ''} in progress</div>`;
+
+  for (const shot of shots) {
+    const attrs = shot.attributes || {};
+    const code = attrs.code || 'Unknown';
+    const status = attrs.sg_status_list || '';
+    const statusName = SG_STATUS_NAMES[status] || status;
+    const statusClass = `status-${status.replace(/[^a-z0-9]/g, '')}`;
+    const imageUrl = attrs.image || null;
+    const desc = attrs.description || '';
+
+    html += `<div class="shot-card">`;
+
+    // Thumbnail
+    html += `<div class="shot-thumb">`;
+    if (imageUrl) {
+      html += `<img src="${imageUrl}" alt="${code}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=shot-thumb-empty>NO IMG</div>'">`;
+    } else {
+      html += `<div class="shot-thumb-empty">NO IMG</div>`;
+    }
+    html += `</div>`;
+
+    // Info
+    html += `<div class="shot-info">`;
+    html += `<div class="shot-code">${code}</div>`;
+    html += `<span class="shot-status ${statusClass} status-default">${statusName}</span>`;
+    if (desc) {
+      html += `<div class="shot-desc">${desc}</div>`;
+    }
+    html += `</div>`;
+
+    html += `</div>`;
+  }
+
+  shotPanelBody.innerHTML = html;
+}
+
+function closeShotPanel() {
+  shotPanel.classList.remove('active');
+  shotOverlay.classList.remove('active');
+}
+
+document.getElementById('shotPanelClose').addEventListener('click', closeShotPanel);
+shotOverlay.addEventListener('click', closeShotPanel);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeShotPanel();
+});
+
+// ============================================================
+//  RENDER
+// ============================================================
+
 function renderNextUp(items, showProjectTag, limit) {
   let html = '';
   const sorted = items.slice().sort((a, b) => a.wd - b.wd);
@@ -499,13 +976,19 @@ function renderNextUp(items, showProjectTag, limit) {
   for (const item of shown) {
     const col = stateColor(item.wd);
     const dayLabel = item.wd === 0 ? 'TODAY' : item.wd === 1 ? '1 day' : `${item.wd}d`;
-    html += `<div class="next-item">`;
+    const hasSg = !!SG_PROJECT_MAP[item.project];
+    const clickAttr = hasSg
+      ? `onclick="openShotPanel('${item.project.replace(/'/g, "\\'")}', '${item.ep}')"`
+      : '';
+    const sgIcon = hasSg ? `<span class="ni-sg-icon" title="Click to view shot status">▸</span>` : '';
+
+    html += `<div class="next-item" ${clickAttr}>`;
     html += `<span class="ni-days" style="color:${col}">${dayLabel}</span>`;
     html += `<span class="ni-detail"><strong>${item.ep} ${item.ms}</strong> · ${formatDayName(item.date)} ${formatDate(item.date)}`;
     if (showProjectTag) {
       html += `<span class="ni-tag">${item.project}</span>`;
     }
-    html += `</span></div>`;
+    html += `${sgIcon}</span></div>`;
   }
   return html;
 }
