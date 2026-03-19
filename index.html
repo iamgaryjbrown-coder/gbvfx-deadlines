@@ -155,7 +155,7 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
   }
 
-  /* Global sticky Next Up — sits outside .container */
+  /* Global sticky Next Up */
   #global-next:empty { display: none; }
   #global-next {
     position: sticky; top: 0; z-index: 100;
@@ -171,6 +171,43 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     margin-top: 0;
   }
+
+  /* Global Next Up: two-column layout when shot panel is open */
+  .global-inner {
+    display: flex; gap: 1.25rem;
+  }
+  .global-left {
+    flex: 1; min-width: 0;
+  }
+  .global-right {
+    width: 420px; flex-shrink: 0;
+    display: none;
+    border-left: 1px solid var(--border);
+    padding-left: 1.25rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .global-right.open { display: block; }
+
+  .global-right::-webkit-scrollbar { width: 4px; }
+  .global-right::-webkit-scrollbar-track { background: transparent; }
+  .global-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .shot-panel-header-inline {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+  .shot-panel-title-inline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+  }
+  .shot-panel-close-inline {
+    background: none; border: none; color: var(--text-dim);
+    font-size: 1.1rem; cursor: pointer; padding: 0.15rem 0.4rem;
+    border-radius: 4px; line-height: 1; font-family: 'JetBrains Mono', monospace;
+  }
+  .shot-panel-close-inline:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 
   .next-up-title {
     font-family: 'JetBrains Mono', monospace;
@@ -208,110 +245,74 @@
   .next-item.clickable { cursor: pointer; border-radius: 4px; padding: 0.3rem 0.4rem; margin: 0 -0.4rem; }
   .next-item.clickable:hover { background: rgba(78,140,255,0.08); }
   .next-item.clickable:active { background: rgba(78,140,255,0.14); }
-
-  .shot-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-  .shot-overlay.open { opacity: 1; pointer-events: auto; }
-
-  .shot-panel {
-    position: fixed; top: 0; right: 0; bottom: 0; z-index: 201;
-    width: min(480px, 90vw); background: var(--surface);
-    border-left: 1px solid var(--border);
-    transform: translateX(100%); transition: transform 0.3s ease;
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .shot-panel.open { transform: translateX(0); }
-
-  .shot-panel-header {
-    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-  }
-  .shot-panel-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
-  }
-  .shot-panel-subtitle {
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.7rem; color: var(--text-dim); margin-top: 0.2rem;
-  }
-  .shot-panel-close {
-    background: none; border: none; color: var(--text-dim);
-    font-size: 1.4rem; cursor: pointer; padding: 0.25rem 0.5rem;
-    border-radius: 4px; line-height: 1; font-family: 'JetBrains Mono', monospace;
-  }
-  .shot-panel-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
-  .shot-panel-body { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; }
+  .next-item.active { background: rgba(78,140,255,0.12); }
 
   .shot-panel-loading {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 3rem 1rem; color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.05em;
+    padding: 2rem 1rem; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.05em;
   }
   .shot-spinner {
-    width: 28px; height: 28px; border: 2px solid var(--border);
+    width: 24px; height: 24px; border: 2px solid var(--border);
     border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 0.8s linear infinite; margin-bottom: 1rem;
+    animation: spin 0.8s linear infinite; margin-bottom: 0.75rem;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .shot-panel-error {
-    padding: 2rem 1rem; text-align: center; color: var(--crit);
-    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.03em;
+    padding: 1.5rem 0.5rem; text-align: center; color: var(--crit);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.03em;
   }
   .shot-panel-empty {
-    padding: 2rem 1rem; text-align: center; color: var(--ok);
-    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 0.03em;
+    padding: 1.5rem 0.5rem; text-align: center; color: var(--ok);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.03em;
   }
   .shot-count {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem; color: var(--text-dim);
-    letter-spacing: 0.05em; margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+    font-size: 0.6rem; color: var(--text-dim);
+    letter-spacing: 0.05em; margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
   }
 
   .shot-card {
-    display: flex; gap: 0.75rem; align-items: flex-start;
-    padding: 0.65rem 0; border-bottom: 1px solid var(--border);
+    display: flex; gap: 0.6rem; align-items: flex-start;
+    padding: 0.5rem 0; border-bottom: 1px solid var(--border);
   }
   .shot-card:last-child { border-bottom: none; }
 
   .shot-thumb {
-    width: 72px; height: 42px; border-radius: 3px;
+    width: 64px; height: 38px; border-radius: 3px;
     background: var(--surface-alt); object-fit: cover;
     flex-shrink: 0; border: 1px solid var(--border);
   }
   .shot-thumb-placeholder {
-    width: 72px; height: 42px; border-radius: 3px;
+    width: 64px; height: 38px; border-radius: 3px;
     background: var(--surface-alt); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.5rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.45rem;
     color: var(--text-muted); border: 1px solid var(--border);
   }
 
   .shot-info { flex: 1; min-width: 0; }
   .shot-code {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem; font-weight: 600; color: var(--text); letter-spacing: 0.02em;
+    font-size: 0.68rem; font-weight: 600; color: var(--text); letter-spacing: 0.02em;
   }
   .shot-desc {
-    font-family: 'Outfit', sans-serif; font-size: 0.7rem; color: var(--text-dim);
-    margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: 'Outfit', sans-serif; font-size: 0.65rem; color: var(--text-dim);
+    margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .shot-no-exr {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--crit); margin-top: 0.2rem;
+    font-size: 0.5rem; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--crit); margin-top: 0.15rem;
   }
 
   .shot-badge {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem; font-weight: 500;
+    font-size: 0.5rem; font-weight: 500;
     letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 2px 6px; border-radius: 3px;
+    padding: 2px 5px; border-radius: 3px;
     flex-shrink: 0; align-self: center;
   }
 
@@ -322,14 +323,14 @@
     .grid { min-width: 480px; }
     .grid-milestone .ms-full { display: none; }
     .grid-milestone .ms-short { display: inline; }
-    .shot-panel { width: 100vw; }
+    .global-inner { flex-direction: column; }
+    .global-right { width: 100%; border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 0.75rem; max-height: 50vh; }
   }
 </style>
 </head>
 <body>
 <div class="noise"></div>
 
-<!-- Global Next Up: OUTSIDE container so sticky works against the viewport -->
 <div id="global-next"></div>
 
 <div class="container">
@@ -348,20 +349,8 @@
   <div class="today-marker" id="today-label"></div>
 </div>
 
-<div class="shot-overlay" id="shot-overlay" onclick="closeShotPanel()"></div>
-<div class="shot-panel" id="shot-panel">
-  <div class="shot-panel-header">
-    <div>
-      <div class="shot-panel-title" id="shot-panel-title"></div>
-      <div class="shot-panel-subtitle" id="shot-panel-subtitle"></div>
-    </div>
-    <button class="shot-panel-close" onclick="closeShotPanel()">&times;</button>
-  </div>
-  <div class="shot-panel-body" id="shot-panel-body"></div>
-</div>
-
 <script>
-const PROJECTS = [
+var PROJECTS = [
   {
     name: "Treasure Island",
     schedule: "TREA Post Production Schedule_V2_170326",
@@ -400,26 +389,26 @@ const PROJECTS = [
   }
 ];
 
-const BANK_HOLIDAYS = [
+var BANK_HOLIDAYS = [
   "2026-01-01","2026-04-03","2026-04-06","2026-05-04",
   "2026-05-25","2026-08-31","2026-12-25","2026-12-28",
-].map(d => d);
+];
 
-const SHOTGRID_WEBHOOK = 'https://hook.eu1.make.com/s6x2g2rh1k02u61unukm8tny89xcouj2';
-const SG_PROJECT_MAP = {
+var SHOTGRID_WEBHOOK = 'https://hook.eu1.make.com/s6x2g2rh1k02u61unukm8tny89xcouj2';
+var SG_PROJECT_MAP = {
   'Bloomers':            { id: 386 },
   'Tall Tales & Murder': { id: 287 },
   'Tommy & Tuppence':    { id: 321 },
   'Treasure Island':     { id: null },
 };
-const SG_STATUS_LABELS = {
+var SG_STATUS_LABELS = {
   wtg:'Waiting to Start', ip:'In Progress', bid:'Bidding',
   '4rv':'For Review', sndexr:'Send EXR', notes:'Notes',
   gb4k:'GB 4K Approved', wdl:'WDL Approved', issue:'Issue',
   send:'Good but not sent', awto:'Awaiting Turnover',
   exr2gb:'EXR 2 GB', gdwip:'Good WIP', wipexr:'WIP EXR Sent',
 };
-const SG_STATUS_COLORS = {
+var SG_STATUS_COLORS = {
   ip:     { bg:'rgba(100,220,140,0.12)', text:'#64dc8c' },
   notes:  { bg:'rgba(255,59,78,0.12)',   text:'#ff3b4e' },
   issue:  { bg:'rgba(255,59,78,0.15)',   text:'#ff3b4e' },
@@ -435,11 +424,11 @@ const SG_STATUS_COLORS = {
 
 function isWeekend(d){ return d.getDay()===0||d.getDay()===6; }
 function toDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function isBankHoliday(d){ return BANK_HOLIDAYS.includes(toDateStr(d)); }
+function isBankHoliday(d){ return BANK_HOLIDAYS.indexOf(toDateStr(d))!==-1; }
 
 function workingDaysBetween(from, to) {
   if(from.getTime()===to.getTime()) return 0;
-  var dir = to>from?1:-1, count=0;
+  var dir=to>from?1:-1, count=0;
   if(dir===1){ var c=new Date(from); c.setDate(c.getDate()+1); while(c<=to){ if(!isWeekend(c)&&!isBankHoliday(c)) count++; c.setDate(c.getDate()+1); } }
   else { var c=new Date(to); c.setDate(c.getDate()+1); while(c<=from){ if(!isWeekend(c)&&!isBankHoliday(c)) count++; c.setDate(c.getDate()+1); } count=-count; }
   return count;
@@ -450,6 +439,8 @@ function formatDate(s){ var d=new Date(s+'T00:00:00'); var m=['Jan','Feb','Mar',
 function formatDayName(s){ var d=new Date(s+'T00:00:00'); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]; }
 function stateClass(w){ if(w<0) return 'past'; if(w<=5) return 'crit'; if(w<=10) return 'warn'; if(w<=20) return 'ok'; return 'clear'; }
 function stateColor(w){ if(w<0) return 'var(--past-text)'; if(w<=5) return 'var(--crit)'; if(w<=10) return 'var(--warn)'; if(w<=20) return 'var(--ok)'; return 'var(--clear)'; }
+
+var activeNextItem = null;
 
 function renderNextUp(items, showProjectTag, limit) {
   var html='';
@@ -464,9 +455,10 @@ function renderNextUp(items, showProjectTag, limit) {
     var hasShot=sg&&sg.id!==null;
     var epNum=parseInt(item.ep.replace(/\D/g,''),10);
     var epCode=epNum<100?100+epNum:epNum;
-    var click=hasShot?' onclick="openShotPanel(\''+item.project.replace(/'/g,"\\'")+'\','+sg.id+','+epCode+',\''+item.ep+'\',\''+item.ms+'\')" ':'';
+    var itemId=item.project.replace(/\W/g,'')+'-'+item.ep+'-'+item.ms.replace(/\W/g,'');
+    var click=hasShot?' onclick="openShotPanel(this,\''+item.project.replace(/'/g,"\\'")+'\','+sg.id+','+epCode+',\''+item.ep+'\',\''+item.ms+'\')" ':'';
     var cls=hasShot?' clickable':'';
-    html+='<div class="next-item'+cls+'"'+click+'>';
+    html+='<div class="next-item'+cls+'" data-id="'+itemId+'"'+click+'>';
     html+='<span class="ni-days" style="color:'+col+'">'+dayLabel+'</span>';
     html+='<span class="ni-detail"><strong>'+item.ep+' '+item.ms+'</strong> · '+formatDayName(item.date)+' '+formatDate(item.date);
     if(showProjectTag) html+='<span class="ni-tag">'+item.project+'</span>';
@@ -525,7 +517,13 @@ function render() {
 
   var globalHtml=renderNextUp(allUpcoming,PROJECTS.length>1,10);
   if(globalHtml){
-    globalNext.innerHTML='<div class="next-up global"><div class="next-up-title">Next Up — All Projects</div>'+globalHtml+'</div>';
+    globalNext.innerHTML='<div class="next-up global"><div class="global-inner">'
+      +'<div class="global-left">'
+      +'<div class="next-up-title">Next Up — All Projects</div>'
+      +globalHtml
+      +'</div>'
+      +'<div class="global-right" id="shot-inline-panel"></div>'
+      +'</div></div>';
   } else {
     globalNext.innerHTML='';
   }
@@ -545,23 +543,25 @@ setInterval(updateClock,1000);
 setInterval(function(){ var n=new Date(); if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<2) render(); },1000);
 
 // ============================================================
-//  SHOTGRID SHOT STATUS PANEL
+//  SHOTGRID — INLINE PANEL
 // ============================================================
 var shotAbort=null;
 
-function openShotPanel(projectName,projectId,episode,epLabel,milestone){
-  var overlay=document.getElementById('shot-overlay');
-  var panel=document.getElementById('shot-panel');
-  var title=document.getElementById('shot-panel-title');
-  var subtitle=document.getElementById('shot-panel-subtitle');
-  var body=document.getElementById('shot-panel-body');
+function openShotPanel(el,projectName,projectId,episode,epLabel,milestone){
+  var panel=document.getElementById('shot-inline-panel');
+  if(!panel) return;
 
-  title.textContent=projectName+' — '+epLabel;
-  subtitle.textContent=milestone+' · Shot Status from ShotGrid';
-  body.innerHTML='<div class="shot-panel-loading"><div class="shot-spinner"></div>Querying ShotGrid…</div>';
+  // Highlight active item
+  var prev=document.querySelector('.next-item.active');
+  if(prev) prev.classList.remove('active');
+  el.classList.add('active');
 
-  overlay.classList.add('open'); panel.classList.add('open');
-  document.body.style.overflow='hidden';
+  panel.classList.add('open');
+  panel.innerHTML='<div class="shot-panel-header-inline">'
+    +'<span class="shot-panel-title-inline">'+projectName+' — '+epLabel+'</span>'
+    +'<button class="shot-panel-close-inline" onclick="closeShotPanel()">&times;</button>'
+    +'</div>'
+    +'<div class="shot-panel-loading"><div class="shot-spinner"></div>Querying ShotGrid…</div>';
 
   if(shotAbort) shotAbort.abort();
   shotAbort=new AbortController();
@@ -574,30 +574,39 @@ function openShotPanel(projectName,projectId,episode,epLabel,milestone){
     signal:shotAbort.signal,
   })
   .then(function(r){ clearTimeout(timeout); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(function(data){ renderShotData(body,data); })
+  .then(function(data){
+    var header='<div class="shot-panel-header-inline">'
+      +'<span class="shot-panel-title-inline">'+projectName+' — '+epLabel+'</span>'
+      +'<button class="shot-panel-close-inline" onclick="closeShotPanel()">&times;</button>'
+      +'</div>';
+    panel.innerHTML=header+renderShotData(data);
+  })
   .catch(function(err){
     clearTimeout(timeout);
-    if(err.name==='AbortError') body.innerHTML='<div class="shot-panel-error">Request timed out. Try again.</div>';
-    else body.innerHTML='<div class="shot-panel-error">Could not reach ShotGrid.<br>'+err.message+'</div>';
+    var header='<div class="shot-panel-header-inline">'
+      +'<span class="shot-panel-title-inline">'+projectName+' — '+epLabel+'</span>'
+      +'<button class="shot-panel-close-inline" onclick="closeShotPanel()">&times;</button>'
+      +'</div>';
+    if(err.name==='AbortError') panel.innerHTML=header+'<div class="shot-panel-error">Request timed out.</div>';
+    else panel.innerHTML=header+'<div class="shot-panel-error">Could not reach ShotGrid.<br>'+err.message+'</div>';
   });
 }
 
 function closeShotPanel(){
-  document.getElementById('shot-overlay').classList.remove('open');
-  document.getElementById('shot-panel').classList.remove('open');
-  document.body.style.overflow='';
+  var panel=document.getElementById('shot-inline-panel');
+  if(panel){ panel.classList.remove('open'); panel.innerHTML=''; }
+  var prev=document.querySelector('.next-item.active');
+  if(prev) prev.classList.remove('active');
   if(shotAbort){shotAbort.abort();shotAbort=null;}
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeShotPanel();});
 
-function renderShotData(container,shots){
+function renderShotData(shots){
   if(!shots||!shots.length){
-    container.innerHTML='<div class="shot-panel-empty">All shots delivered or omitted ✓</div>';
-    return;
+    return '<div class="shot-panel-empty">All shots delivered or omitted ✓</div>';
   }
 
-  // Sort by status group, then numerically by shot code
-shots.sort(function(a,b){
+  shots.sort(function(a,b){
     var ca=(a.attributes?a.attributes.code:a.code)||'';
     var cb=(b.attributes?b.attributes.code:b.code)||'';
     return ca.localeCompare(cb,undefined,{numeric:true});
@@ -610,7 +619,7 @@ shots.sort(function(a,b){
   }
 
   var html='<div class="shot-count">'+shots.length+' shot'+(shots.length!==1?'s':'')+' remaining';
-  if(missingExr>0) html+=' · <span style="color:var(--crit)">'+missingExr+' missing EXR 2 Vendor date</span>';
+  if(missingExr>0) html+=' · <span style="color:var(--crit)">'+missingExr+' no EXR date</span>';
   html+='</div>';
 
   for(var i=0;i<shots.length;i++){
@@ -629,13 +638,13 @@ shots.sort(function(a,b){
     else html+='<div class="shot-thumb-placeholder">NO IMG</div>';
     html+='<div class="shot-info"><div class="shot-code">'+code+'</div>';
     if(desc) html+='<div class="shot-desc" title="'+desc.replace(/"/g,'&quot;')+'">'+desc+'</div>';
-    if(!exrVendor) html+='<div class="shot-no-exr">⚠ NO EXR 2 VENDOR DATE</div>';
+    if(!exrVendor) html+='<div class="shot-no-exr">⚠ NO EXR DATE</div>';
     html+='</div>';
     html+='<span class="shot-badge" style="background:'+colors.bg+';color:'+colors.text+'">'+label+'</span>';
     html+='</div>';
   }
 
-  container.innerHTML=html;
+  return html;
 }
 </script>
 </body>
