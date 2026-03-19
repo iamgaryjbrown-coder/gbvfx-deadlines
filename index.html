@@ -174,11 +174,8 @@
 
   /* Global Next Up: two-column layout when shot panel is open */
   .global-inner { position: relative; }
-  .global-left {
-    flex: 1; min-width: 0;
-  }
-  .global-inner { position: relative; }
-  .global-left { padding-right: 440px; }
+  .global-left { transition: padding-right 0.3s ease; }
+  .global-inner.has-panel .global-left { padding-right: 440px; }
   .global-right {
     width: 420px;
     display: none;
@@ -326,8 +323,14 @@
     .grid { min-width: 480px; }
     .grid-milestone .ms-full { display: none; }
     .grid-milestone .ms-short { display: inline; }
-    .global-inner { flex-direction: column; }
-    .global-right { width: 100%; border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 0.75rem; max-height: 50vh; }
+    .global-inner.has-panel .global-left { padding-right: 0; }
+    .global-right {
+      position: relative; width: 100%;
+      border-left: none; padding-left: 0;
+      border-top: 1px solid var(--border);
+      padding-top: 0.75rem; margin-top: 0.75rem;
+      max-height: 50vh;
+    }
   }
 </style>
 </head>
@@ -560,6 +563,8 @@ function openShotPanel(el,projectName,projectId,episode,epLabel,milestone){
   el.classList.add('active');
 
   panel.classList.add('open');
+  var inner=document.querySelector('.global-inner');
+  if(inner) inner.classList.add('has-panel');
   panel.innerHTML='<div class="shot-panel-header-inline">'
     +'<span class="shot-panel-title-inline">'+projectName+' — '+epLabel+'</span>'
     +'<button class="shot-panel-close-inline" onclick="closeShotPanel()">&times;</button>'
@@ -598,6 +603,8 @@ function openShotPanel(el,projectName,projectId,episode,epLabel,milestone){
 function closeShotPanel(){
   var panel=document.getElementById('shot-inline-panel');
   if(panel){ panel.classList.remove('open'); panel.innerHTML=''; }
+  var inner=document.querySelector('.global-inner');
+  if(inner) inner.classList.remove('has-panel');
   var prev=document.querySelector('.next-item.active');
   if(prev) prev.classList.remove('active');
   if(shotAbort){shotAbort.abort();shotAbort=null;}
