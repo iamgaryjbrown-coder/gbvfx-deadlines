@@ -247,6 +247,21 @@
   .next-item.clickable:active { background: rgba(78,140,255,0.14); }
   .next-item.active { background: rgba(78,140,255,0.12); }
 
+  .ni-shot-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2px 0; border-radius: 3px;
+    white-space: nowrap;
+    width: 10ch; text-align: center;
+    flex-shrink: 0;
+  }
+  .ni-shot-status.loading { color: var(--text-muted); }
+  .ni-shot-status.complete { color: var(--ok); background: rgba(45,212,160,0.1); }
+  .ni-shot-status.remaining { color: var(--crit); background: rgba(255,59,78,0.08); }
+  .ni-shot-status.error { color: var(--text-muted); }
+  .ni-spacer { width: 10ch; flex-shrink: 0; }
+
   .shot-panel-loading {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 2rem 1rem; color: var(--text-dim);
@@ -465,6 +480,11 @@ function renderNextUp(items, showProjectTag, limit) {
     var click=hasShot?' onclick="openShotPanel(this,\''+item.project.replace(/'/g,"\\'")+'\','+sg.id+','+epCode+',\''+item.ep+'\',\''+item.ms+'\')" ':'';
     var cls=hasShot?' clickable':'';
     html+='<div class="next-item'+cls+'" data-id="'+itemId+'"'+click+'>';
+    if(hasShot && item.ms==='VFX Delivery'){
+      html+='<span class="ni-shot-status loading" data-sg-project="'+sg.id+'" data-sg-episode="'+epCode+'">...</span>';
+    } else if(showProjectTag) {
+      html+='<span class="ni-spacer"></span>';
+    }
     html+='<span class="ni-days" style="color:'+col+'">'+dayLabel+'</span>';
     html+='<span class="ni-detail"><strong>'+item.ep+' '+item.ms+'</strong> · '+formatDayName(item.date)+' '+formatDate(item.date);
     if(showProjectTag) html+='<span class="ni-tag">'+item.project+'</span>';
@@ -503,6 +523,7 @@ function render() {
         var isoDate=ms.dates[i];
         var target=new Date(isoDate+'T00:00:00');
         var wd=workingDaysBetween(today,target);
+        if(target<today && wd===0) wd=-1;
         var cls=stateClass(wd);
         var displayDays=wd<0?Math.abs(wd):wd===0?'0':wd;
         var labelText=wd<0?'past':wd===0?'TODAY':wd===1?'day':'days';
@@ -547,6 +568,54 @@ function updateClock(){
 render(); updateClock();
 setInterval(updateClock,1000);
 setInterval(function(){ var n=new Date(); if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<2) render(); },1000);
+
+// Auto-fetch shot status for all VFX Delivery badges
+function fetchShotBadges(){
+  var badges=document.querySelectorAll('.ni-shot-status[data-sg-project]');
+  var queries={};
+  // Deduplicate by project+episode
+  for(var i=0;i<badges.length;i++){
+    var b=badges[i];
+    var key=b.getAttribute('data-sg-project')+'-'+b.getAttribute('data-sg-episode');
+    if(!queries[key]) queries[key]={projectId:parseInt(b.getAttribute('data-sg-project')),episode:parseInt(b.getAttribute('data-sg-episode')),badges:[]};
+    queries[key].badges.push(b);
+  }
+  var keys=Object.keys(queries);
+  for(var k=0;k<keys.length;k++){
+    (function(q){
+      fetch(SHOTGRID_WEBHOOK,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({project_id:q.projectId,project_name:'',episode:q.episode}),
+      })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(data){
+        var count=data?data.length:0;
+        for(var j=0;j<q.badges.length;j++){
+          var b=q.badges[j];
+          b.classList.remove('loading');
+          if(count===0){
+            b.classList.add('complete');
+            b.textContent='COMPLETE';
+          } else {
+            b.classList.add('remaining');
+            b.textContent=count+' SHOT'+(count!==1?'S':'');
+          }
+        }
+      })
+      .catch(function(){
+        for(var j=0;j<q.badges.length;j++){
+          var b=q.badges[j];
+          b.classList.remove('loading');
+          b.classList.add('error');
+          b.textContent='';
+        }
+      });
+    })(queries[keys[k]]);
+  }
+}
+// Fire after a short delay to let the page render first
+setTimeout(fetchShotBadges,500);
 
 // ============================================================
 //  SHOTGRID — INLINE PANEL
