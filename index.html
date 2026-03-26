@@ -346,6 +346,15 @@
       padding-top: 0.75rem; margin-top: 0.75rem;
       max-height: 50vh;
     }
+    /* Cap global panel height on mobile so content below is visible */
+    .next-up.global {
+      max-height: 38vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #global-next {
+      padding: 0 0.75rem;
+    }
   }
 </style>
 </head>
@@ -543,7 +552,8 @@ function render() {
 
   app.innerHTML=html;
 
-  var globalHtml=renderNextUp(allUpcoming,PROJECTS.length>1,10);
+  var globalLimit=window.innerWidth<=900?5:10;
+  var globalHtml=renderNextUp(allUpcoming,PROJECTS.length>1,globalLimit);
   if(globalHtml){
     globalNext.innerHTML='<div class="next-up global"><div class="global-inner">'
       +'<div class="global-left">'
