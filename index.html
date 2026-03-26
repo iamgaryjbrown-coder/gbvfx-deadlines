@@ -366,7 +366,10 @@
 <div class="container">
   <header>
     <h1>GBVFX Deadlines</h1>
-    <span class="clock" id="clock"></span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="clock" id="clock"></span>
+      <button onclick="window.location.reload(true)" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:3px 8px;font-size:0.7rem;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em" title="Refresh">↻</button>
+    </div>
   </header>
   <div id="app"></div>
   <div class="legend">
